@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f1a">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PLTS Monitor">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" href="/icon-192.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="stylesheet" href="/styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <title>PLTS Monitor — Production Grade</title>
+</head>
+<body data-theme="dark">
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <button class="menu-toggle" id="menuToggle" aria-label="Toggle navigation">☰</button>
+      <div class="brand">
+        <span class="brand-icon">☀️</span>
+        <span class="brand-text">PLTS Monitor</span>
+      </div>
+      <div class="header-status" id="headerStatus">
+        <span class="status-dot" id="onlineDot"></span>
+        <span id="clock" class="clock">--:--:--</span>
+      </div>
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">🌙</button>
+    </header>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <nav class="nav">
+          <a href="#dashboard" class="nav-item active" data-view="dashboard">📊 Dashboard</a>
+          <a href="#battery" class="nav-item" data-view="battery">🔋 Battery</a>
+          <a href="#ac" class="nav-item" data-view="ac">⚡ AC Output</a>
+          <a href="#environment" class="nav-item" data-view="environment">🌡️ Environment</a>
+          <a href="#energy" class="nav-item" data-view="energy">📈 Energy</a>
+          <a href="#calibration" class="nav-item" data-view="calibration">🎯 Calibration</a>
+          <a href="#alarms" class="nav-item" data-view="alarms">🚨 Alarms</a>
+          <a href="#diagnostics" class="nav-item" data-view="diagnostics">🔧 Diagnostics</a>
+          <a href="#reports" class="nav-item" data-view="reports">📄 Reports</a>
+          <a href="#settings" class="nav-item" data-view="settings">⚙️ Settings</a>
+        </nav>
+        <div class="sidebar-footer" id="sidebarFooter">
+          <div class="footer-row"><span>FW</span><span id="fwVersion">--</span></div>
+          <div class="footer-row"><span>Heap</span><span id="heapFree">--</span></div>
+          <div class="footer-row"><span>Uptime</span><span id="uptime">--</span></div>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main" id="main">
+        <!-- DASHBOARD VIEW -->
+        <section id="view-dashboard" class="view active">
+          <h1>Dashboard</h1>
+          <div class="stale-banner" id="staleBanner" style="display:none;">
+            ⚠️ OFFLINE — Last seen: <span id="lastSeen">--</span> — Data shown is STALE
+          </div>
+          <div class="card-grid">
+            <div class="card stat-card" id="cardSystemHealth">
+              <div class="card-label">System Health</div>
+              <div class="card-value" id="systemHealth">--</div>
+              <div class="card-badge" id="systemHealthBadge">--</div>
+            </div>
+            <div class="card stat-card" id="cardBatteryVoltage">
+              <div class="card-label">Battery Voltage</div>
+              <div class="card-value" id="batteryVoltage">-- <small>V</small></div>
+              <div class="card-quality measured" id="batteryVoltageQuality">MEASURED · VALID</div>
+            </div>
+            <div class="card stat-card" id="cardBatteryCurrent">
+              <div class="card-label">Battery Current</div>
+              <div class="card-value" id="batteryCurrent">-- <small>A</small></div>
+              <div class="card-quality measured" id="batteryCurrentQuality">MEASURED · VALID</div>
+            </div>
+            <div class="card stat-card" id="cardBatteryPower">
+              <div class="card-label">Battery Power</div>
+              <div class="card-value" id="batteryPower">-- <small>W</small></div>
+              <div class="card-quality derived" id="batteryPowerQuality">DERIVED</div>
+            </div>
+            <div class="card stat-card" id="cardDirection">
+              <div class="card-label">Charge State</div>
+              <div class="card-value" id="direction">--</div>
+            </div>
+            <div class="card stat-card" id="cardSoc">
+              <div class="card-label">State of Charge</div>
+              <div class="card-value" id="soc">-- <small>%</small></div>
+              <div class="card-quality estimated" id="socQuality">ESTIMATED · COULOMB COUNTING</div>
+            </div>
+            <div class="card stat-card" id="cardRemainingAh">
+              <div class="card-label">Remaining Ah</div>
+              <div class="card-value" id="remainingAh">-- <small>Ah</small></div>
+            </div>
+            <div class="card stat-card" id="cardRuntime">
+              <div class="card-label">Estimated Runtime</div>
+              <div class="card-value" id="runtime">--</div>
+              <div class="card-quality estimated">ESTIMATED</div>
+            </div>
+            <div class="card stat-card" id="cardAcCurrent">
+              <div class="card-label">AC Current (RMS)</div>
+              <div class="card-value" id="acRmsCurrent">-- <small>A</small></div>
+              <div class="card-quality measured" id="acCurrentQuality">MEASURED · VALID</div>
+            </div>
+            <div class="card stat-card" id="cardAcPower">
+              <div class="card-label">Estimated AC Power</div>
+              <div class="card-value" id="acPower">-- <small>W</small></div>
+              <div class="card-quality estimated">⚠️ ESTIMATED (assumed 220V/0.9PF)</div>
+            </div>
+            <div class="card stat-card" id="cardTemperature">
+              <div class="card-label">Ambient Temperature</div>
+              <div class="card-value" id="temperature">-- <small>°C</small></div>
+              <div class="card-quality measured">MEASURED · SHT31</div>
+            </div>
+            <div class="card stat-card" id="cardHumidity">
+              <div class="card-label">Humidity</div>
+              <div class="card-value" id="humidity">-- <small>%</small></div>
+              <div class="card-quality measured">MEASURED · SHT31</div>
+            </div>
+          </div>
+          <div class="card alarms-card" id="cardAlarms">
+            <div class="card-label">Active Alarms</div>
+            <div id="activeAlarms" class="alarms-list">No active alarms</div>
+          </div>
+          <div class="card freshness-card">
+            <div class="card-label">Telemetry Freshness</div>
+            <div class="card-value" id="freshness">--</div>
+            <div class="card-quality" id="freshnessQuality">--</div>
+          </div>
+        </section>
+
+        <!-- BATTERY VIEW -->
+        <section id="view-battery" class="view">
+          <h1>Battery — 48V LiFePO4 15S</h1>
+          <div class="card-grid">
+            <div class="card"><div class="card-label">Voltage</div><div class="card-value" id="bVoltage">-- V</div></div>
+            <div class="card"><div class="card-label">Current</div><div class="card-value" id="bCurrent">-- A</div></div>
+            <div class="card"><div class="card-label">Power</div><div class="card-value" id="bPower">-- W</div></div>
+            <div class="card"><div class="card-label">Direction</div><div class="card-value" id="bDirection">--</div></div>
+            <div class="card"><div class="card-label">SOC</div><div class="card-value" id="bSoc">-- %</div></div>
+            <div class="card"><div class="card-label">Remaining Ah</div><div class="card-value" id="bRemainingAh">-- Ah</div></div>
+            <div class="card"><div class="card-label">Charge Ah</div><div class="card-value" id="bChargeAh">-- Ah</div></div>
+            <div class="card"><div class="card-label">Discharge Ah</div><div class="card-value" id="bDischargeAh">-- Ah</div></div>
+            <div class="card"><div class="card-label">Net Ah</div><div class="card-value" id="bNetAh">-- Ah</div></div>
+            <div class="card"><div class="card-label">Equivalent Full Cycles</div><div class="card-value" id="bEfc">--</div></div>
+            <div class="card"><div class="card-label">Estimated Usable Capacity</div><div class="card-value" id="bUsableCap">-- Ah</div></div>
+            <div class="card"><div class="card-label">Peak Charge Current</div><div class="card-value" id="bPeakCharge">-- A</div></div>
+            <div class="card"><div class="card-label">Peak Discharge Current</div><div class="card-value" id="bPeakDischarge">-- A</div></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-label">Voltage & Current (24h)</div>
+            <canvas id="batteryChart" height="200"></canvas>
+          </div>
+          <div class="card chart-card">
+            <div class="card-label">SOC & Power (24h)</div>
+            <canvas id="socChart" height="200"></canvas>
+          </div>
+        </section>
+
+        <!-- AC VIEW -->
+        <section id="view-ac" class="view">
+          <h1>AC Output</h1>
+          <div class="warning-banner">
+            ⚠️ ACS712 measures AC CURRENT only. AC voltage/power is ESTIMATED based on assumed 220V / 0.9 PF.
+          </div>
+          <div class="card-grid">
+            <div class="card"><div class="card-label">RMS Current</div><div class="card-value" id="acRms">-- A</div><div class="card-quality measured">MEASURED</div></div>
+            <div class="card"><div class="card-label">Peak Current</div><div class="card-value" id="acPeak">-- A</div><div class="card-quality measured">MEASURED</div></div>
+            <div class="card"><div class="card-label">Average Current</div><div class="card-value" id="acAvg">-- A</div><div class="card-quality measured">MEASURED</div></div>
+            <div class="card"><div class="card-label">Signal Quality</div><div class="card-value" id="acSigQuality">--</div></div>
+            <div class="card"><div class="card-label">Estimated AC Power</div><div class="card-value" id="acEstPower">-- W</div><div class="card-quality estimated">⚠️ ESTIMATED</div></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-label">AC Current Trend (1h)</div>
+            <canvas id="acChart" height="200"></canvas>
+          </div>
+        </section>
+
+        <!-- ENVIRONMENT VIEW -->
+        <section id="view-environment" class="view">
+          <h1>Environment — Ambient / Enclosure</h1>
+          <p class="info-note">Note: This is ambient/enclosure temperature, NOT battery cell temperature (brief §29).</p>
+          <div class="card-grid">
+            <div class="card"><div class="card-label">Temperature</div><div class="card-value" id="envTemp">-- °C</div><div class="card-quality measured">MEASURED · SHT31</div></div>
+            <div class="card"><div class="card-label">Humidity</div><div class="card-value" id="envHum">-- %</div><div class="card-quality measured">MEASURED · SHT31</div></div>
+            <div class="card"><div class="card-label">Dew Point</div><div class="card-value" id="envDew">-- °C</div><div class="card-quality derived">DERIVED</div></div>
+            <div class="card"><div class="card-label">Condensation Risk</div><div class="card-value" id="envCond">--</div></div>
+          </div>
+          <div class="card chart-card">
+            <div class="card-label">Temperature & Humidity (24h)</div>
+            <canvas id="envChart" height="200"></canvas>
+          </div>
+        </section>
+
+        <!-- ENERGY VIEW -->
+        <section id="view-energy" class="view">
+          <h1>Energy Analytics</h1>
+          <div class="card-grid">
+            <div class="card"><div class="card-label">Charge Energy</div><div class="card-value" id="enChargeWh">-- Wh</div></div>
+            <div class="card"><div class="card-label">Discharge Energy</div><div class="card-value" id="enDischargeWh">-- Wh</div></div>
+            <div class="card"><div class="card-label">Net Energy</div><div class="card-value" id="enNetWh">-- Wh</div></div>
+            <div class="card"><div class="card-label">Charge Ah</div><div class="card-value" id="enChargeAh">-- Ah</div></div>
+            <div class="card"><div class="card-label">Discharge Ah</div><div class="card-value" id="enDischargeAh">-- Ah</div></div>
+            <div class="card"><div class="card-label">Equivalent Full Cycles</div><div class="card-value" id="enEfc">--</div></div>
+          </div>
+          <div class="info-note">⚠️ No PV metrics displayed — hardware does not measure PV voltage/current (brief §92).</div>
+          <div class="card chart-card">
+            <div class="card-label">Daily Energy (30 days)</div>
+            <canvas id="energyChart" height="200"></canvas>
+          </div>
+        </section>
+
+        <!-- CALIBRATION VIEW -->
+        <section id="view-calibration" class="view">
+          <h1>Calibration Center</h1>
+          <div class="card">
+            <h3>Battery Voltage — 3-Point Calibration</h3>
+            <p class="info-note">Use a calibrated external multimeter for reference values (brief §11-14).</p>
+            <div class="calib-grid">
+              <div class="calib-point">
+                <h4>LOW (target ~45V)</h4>
+                <label>Reference (multimeter):<input type="number" id="calLowRef" step="0.01" placeholder="45.00"></label>
+                <label>ESP32 reading:<input type="number" id="calLowRaw" step="0.01" readonly></label>
+                <button onclick="captureCalibrationPoint('low')">Capture</button>
+              </div>
+              <div class="calib-point">
+                <h4>NOMINAL (~50V)</h4>
+                <label>Reference (multimeter):<input type="number" id="calNomRef" step="0.01" placeholder="50.00"></label>
+                <label>ESP32 reading:<input type="number" id="calNomRaw" step="0.01" readonly></label>
+                <button onclick="captureCalibrationPoint('nominal')">Capture</button>
+              </div>
+              <div class="calib-point">
+                <h4>FULL (54V)</h4>
+                <label>Reference (multimeter):<input type="number" id="calFullRef" step="0.01" placeholder="54.00"></label>
+                <label>ESP32 reading:<input type="number" id="calFullRaw" step="0.01" readonly></label>
+                <button onclick="captureCalibrationPoint('full')">Capture</button>
+              </div>
+            </div>
+            <div class="calib-actions">
+              <button onclick="saveCalibration()" class="btn-primary">Confirm & Save Calibration</button>
+              <button onclick="restorePreviousCalibration()">Restore Previous</button>
+              <button onclick="factoryDefaultCalibration()">Factory Default</button>
+            </div>
+            <div id="calibStatus" class="calib-status"></div>
+          </div>
+          <div class="card">
+            <h3>ACS712 Zero-Current Calibration</h3>
+            <p class="info-note">Ensure AC output load is ZERO before calibrating (brief §27).</p>
+            <button onclick="performAcs712ZeroCal()" class="btn-primary">Capture Zero Offset</button>
+            <div id="acsCalStatus" class="calib-status"></div>
+          </div>
+          <div class="card">
+            <h3>SHT31 Offset Calibration</h3>
+            <label>Temperature offset (°C):<input type="number" id="shtTempOffset" step="0.1" value="0"></label>
+            <label>Humidity offset (%):<input type="number" id="shtHumOffset" step="0.1" value="0"></label>
+            <button onclick="saveShtOffsets()" class="btn-primary">Save Offsets</button>
+          </div>
+        </section>
+
+        <!-- ALARMS VIEW -->
+        <section id="view-alarms" class="view">
+          <h1>Alarm Center</h1>
+          <div class="alarm-filters">
+            <select id="alarmFilterSeverity"><option value="">All Severities</option><option>INFO</option><option>WARNING</option><option>CRITICAL</option></select>
+            <select id="alarmFilterLifecycle"><option value="">All States</option><option>ACTIVE</option><option>ACKNOWLEDGED</option><option>CLEARED</option></select>
+          </div>
+          <div class="card">
+            <h3>Active Alarms</h3>
+            <div id="alarmsActive" class="alarms-list">No active alarms</div>
+          </div>
+          <div class="card">
+            <h3>Alarm History</h3>
+            <div id="alarmsHistory" class="alarms-list">Loading...</div>
+          </div>
+        </section>
+
+        <!-- DIAGNOSTICS VIEW -->
+        <section id="view-diagnostics" class="view">
+          <h1>Diagnostics</h1>
+          <div class="card-grid">
+            <div class="card"><div class="card-label">Uptime</div><div class="card-value" id="diagUptime">--</div></div>
+            <div class="card"><div class="card-label">Free Heap</div><div class="card-value" id="diagHeap">--</div></div>
+            <div class="card"><div class="card-label">Min Free Heap</div><div class="card-value" id="diagMinHeap">--</div></div>
+            <div class="card"><div class="card-label">WiFi RSSI</div><div class="card-value" id="diagRssi">-- dBm</div></div>
+            <div class="card"><div class="card-label">WiFi Reconnects</div><div class="card-value" id="diagWifiReconnect">--</div></div>
+            <div class="card"><div class="card-label">MQTT Connected</div><div class="card-value" id="diagMqtt">--</div></div>
+            <div class="card"><div class="card-label">NTP Synced</div><div class="card-value" id="diagNtp">--</div></div>
+            <div class="card"><div class="card-label">Reset Reason</div><div class="card-value" id="diagReset">--</div></div>
+            <div class="card"><div class="card-label">Boot Count</div><div class="card-value" id="diagBoot">--</div></div>
+            <div class="card"><div class="card-label">Firmware Version</div><div class="card-value" id="diagFw">--</div></div>
+            <div class="card"><div class="card-label">Protocol Version</div><div class="card-value" id="diagProto">--</div></div>
+            <div class="card"><div class="card-label">Storage</div><div class="card-value" id="diagStorage">--</div></div>
+            <div class="card"><div class="card-label">Spool Size</div><div class="card-value" id="diagSpool">--</div></div>
+          </div>
+          <div class="card">
+            <h3>Sensor Health</h3>
+            <div id="sensorHealth" class="sensor-health-grid">Loading...</div>
+          </div>
+        </section>
+
+        <!-- REPORTS VIEW -->
+        <section id="view-reports" class="view">
+          <h1>Reports</h1>
+          <div class="card">
+            <h3>Generate Report</h3>
+            <label>Report type:
+              <select id="reportType"><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select>
+            </label>
+            <label>Date:<input type="date" id="reportDate"></label>
+            <button onclick="generateReport()" class="btn-primary">Generate</button>
+            <div class="export-buttons">
+              <button onclick="exportReport('csv')">Export CSV</button>
+              <button onclick="exportReport('json')">Export JSON</button>
+            </div>
+          </div>
+          <div class="card" id="reportResult">
+            <h3>Report</h3>
+            <div id="reportContent">No report generated yet.</div>
+          </div>
+        </section>
+
+        <!-- SETTINGS VIEW -->
+        <section id="view-settings" class="view">
+          <h1>Settings</h1>
+          <div class="card">
+            <h3>Device Configuration</h3>
+            <label>Device Name:<input type="text" id="cfgDeviceName" placeholder="PLTS Site A"></label>
+            <label>Site Name:<input type="text" id="cfgSiteName" placeholder="Site A"></label>
+            <label>Timezone:<input type="text" id="cfgTimezone" placeholder="Asia/Jakarta"></label>
+            <label>Battery Capacity (Ah):<input type="number" id="cfgCapacity" step="0.1" value="200"></label>
+            <label>Full Voltage:<input type="number" id="cfgFullV" step="0.1" value="54.0"></label>
+            <label>Low Voltage:<input type="number" id="cfgLowV" step="0.1" value="45.0"></label>
+            <label>Idle Current Threshold (A):<input type="number" id="cfgIdle" step="0.1" value="0.5"></label>
+            <label>Telemetry Interval (s):<input type="number" id="cfgInterval" step="1" value="5"></label>
+            <button onclick="saveConfig()" class="btn-primary">Save Configuration</button>
+          </div>
+          <div class="card">
+            <h3>Backend Configuration</h3>
+            <label>ESP32 API URL:<input type="url" id="cfgApiUrl" placeholder="http://192.168.1.100"></label>
+            <label>GAS URL:<input type="url" id="cfgGasUrl" placeholder="https://script.google.com/..."></label>
+            <label>MQTT Broker URL:<input type="url" id="cfgMqttUrl" placeholder="wss://broker.example.com:8884/mqtt"></label>
+            <label>MQTT Username:<input type="text" id="cfgMqttUser"></label>
+            <label>MQTT Password:<input type="password" id="cfgMqttPass"></label>
+            <button onclick="saveBackendConfig()" class="btn-primary">Save Backend Config</button>
+          </div>
+          <div class="card danger-zone">
+            <h3>⚠️ Danger Zone</h3>
+            <button onclick="rebootDevice()" class="btn-danger">Reboot ESP32</button>
+            <button onclick="factoryResetPrepare()" class="btn-danger">Factory Reset</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Mobile bottom nav -->
+    <nav class="bottom-nav">
+      <a href="#dashboard" class="nav-item active" data-view="dashboard">📊</a>
+      <a href="#battery" class="nav-item" data-view="battery">🔋</a>
+      <a href="#ac" class="nav-item" data-view="ac">⚡</a>
+      <a href="#alarms" class="nav-item" data-view="alarms">🚨</a>
+      <a href="#settings" class="nav-item" data-view="settings">⚙️</a>
+    </nav>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>
