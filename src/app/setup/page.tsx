@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { CheckCircle2, XCircle, Loader2, Zap, Upload, Save, Timer, KeyRound, Link as LinkIcon, Cpu } from 'lucide-react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { CheckCircle2, XCircle, Loader2, Zap, Upload, Save, Timer, KeyRound, Link as LinkIcon, Cpu, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,21 +22,29 @@ import { useSysConfig } from '@/components/providers/sys-config-provider';
 
 type HandshakeStatus = 'idle' | 'testing' | 'success' | 'failed';
 
-export default function SetupPage() {
+function SetupPageInner() {
   const router = useRouter();
-  const { config, save } = useSysConfig();
+  const searchParams = useSearchParams();
+  const isAddMode = searchParams.get('mode') === 'add-device';
+  const { config, save, addDevice } = useSysConfig();
 
-  const [gasUrl, setGasUrl] = useState(config?.gas_webapp_url ?? '');
-  const [authToken, setAuthToken] = useState(config?.auth_token ?? '');
-  const [deviceId, setDeviceId] = useState(config?.device_id ?? 'PLTS_MONITOR_01');
+  // In add-device mode we start from blank so the user configures a NEW device.
+  const source = isAddMode ? null : config;
+
+  const [gasUrl, setGasUrl] = useState(source?.gas_webapp_url ?? '');
+  const [authToken, setAuthToken] = useState(source?.auth_token ?? '');
+  const [deviceId, setDeviceId] = useState(source?.device_id ?? 'PLTS_MONITOR_01');
+  const [label, setLabel] = useState(
+    source?.devices.find((d) => d.device_id === source?.active_device_id)?.label ?? ''
+  );
   const [refreshSec, setRefreshSec] = useState(
-    config?.dashboard_settings.telemetry_refresh_interval_sec ?? DEFAULT_DASHBOARD_SETTINGS.telemetry_refresh_interval_sec
+    source?.dashboard_settings.telemetry_refresh_interval_sec ?? DEFAULT_DASHBOARD_SETTINGS.telemetry_refresh_interval_sec
   );
   const [nominalV, setNominalV] = useState(
-    config?.dashboard_settings.battery_nominal_voltage ?? DEFAULT_DASHBOARD_SETTINGS.battery_nominal_voltage
+    source?.dashboard_settings.battery_nominal_voltage ?? DEFAULT_DASHBOARD_SETTINGS.battery_nominal_voltage
   );
   const [capacityAh, setCapacityAh] = useState(
-    config?.dashboard_settings.battery_capacity_ah ?? DEFAULT_DASHBOARD_SETTINGS.battery_capacity_ah
+    source?.dashboard_settings.battery_capacity_ah ?? DEFAULT_DASHBOARD_SETTINGS.battery_capacity_ah
   );
   const [lowV, setLowV] = useState(
     config?.dashboard_settings.low_battery_warning_threshold ?? DEFAULT_DASHBOARD_SETTINGS.low_battery_warning_threshold
@@ -78,20 +86,33 @@ export default function SetupPage() {
 
   const persist = useCallback(() => {
     if (!formValid || handshakeStatus !== 'success') return;
-    save({
-      gas_webapp_url: gasUrl.trim(),
-      auth_token: authToken.trim(),
-      device_id: deviceId.trim(),
-      dashboard_settings: {
-        telemetry_refresh_interval_sec: refreshSec,
-        battery_nominal_voltage: nominalV,
-        battery_capacity_ah: capacityAh,
-        low_battery_warning_threshold: lowV,
-        enable_audio_alarm: audio,
-        theme: DEFAULT_DASHBOARD_SETTINGS.theme,
-      },
-    });
-    toast.success('Konfigurasi tersimpan di browser Anda.');
+    const dashboard = {
+      telemetry_refresh_interval_sec: refreshSec,
+      battery_nominal_voltage: nominalV,
+      battery_capacity_ah: capacityAh,
+      low_battery_warning_threshold: lowV,
+      enable_audio_alarm: audio,
+      theme: DEFAULT_DASHBOARD_SETTINGS.theme,
+    };
+    if (isAddMode && config) {
+      addDevice({
+        device_id: deviceId.trim(),
+        label: label.trim() || deviceId.trim(),
+        gas_webapp_url: gasUrl.trim(),
+        auth_token: authToken.trim(),
+        dashboard_settings: dashboard,
+      });
+      toast.success(`Perangkat ${deviceId.trim()} ditambahkan & di-set aktif.`);
+    } else {
+      save({
+        gas_webapp_url: gasUrl.trim(),
+        auth_token: authToken.trim(),
+        device_id: deviceId.trim(),
+        label: label.trim() || deviceId.trim(),
+        dashboard_settings: dashboard,
+      });
+      toast.success('Konfigurasi tersimpan di browser Anda.');
+    }
     router.replace('/');
   }, [
     formValid,
@@ -99,13 +120,17 @@ export default function SetupPage() {
     gasUrl,
     authToken,
     deviceId,
+    label,
     refreshSec,
     nominalV,
     capacityAh,
     lowV,
     audio,
     save,
+    addDevice,
     router,
+    isAddMode,
+    config,
   ]);
 
   const handleImport = useCallback(
@@ -122,6 +147,8 @@ export default function SetupPage() {
         setGasUrl(restored.gas_webapp_url);
         setAuthToken(restored.auth_token);
         setDeviceId(restored.device_id);
+        const activeProfile = restored.devices.find((d) => d.device_id === restored.active_device_id);
+        setLabel(activeProfile?.label ?? restored.device_id);
         setRefreshSec(restored.dashboard_settings.telemetry_refresh_interval_sec);
         setNominalV(restored.dashboard_settings.battery_nominal_voltage);
         setCapacityAh(restored.dashboard_settings.battery_capacity_ah);
@@ -144,13 +171,13 @@ export default function SetupPage() {
           <div className="flex items-center gap-2 text-primary">
             <Zap className="w-6 h-6" />
             <h1 className="text-2xl font-semibold tracking-tight" data-testid="setup-title">
-              Setup Awal PLTS Monitor
+              {isAddMode ? 'Tambah Perangkat Baru' : 'Setup Awal PLTS Monitor'}
             </h1>
           </div>
           <p className="text-sm text-muted-foreground">
-            Aplikasi ini bersifat <span className="font-medium text-foreground">stateless</span>: seluruh kredensial
-            Anda disimpan lokal di browser (localStorage) — tidak pernah dikirim ke server pihak ketiga selain Google
-            Apps Script yang Anda daftarkan sendiri.
+            {isAddMode
+              ? 'Perangkat baru akan disimpan di daftar dan otomatis dijadikan perangkat aktif.'
+              : 'Aplikasi ini bersifat stateless: seluruh kredensial Anda disimpan lokal di browser (localStorage) — tidak pernah dikirim ke server pihak ketiga selain Google Apps Script yang Anda daftarkan sendiri.'}
           </p>
         </header>
 
@@ -206,6 +233,18 @@ export default function SetupPage() {
                 placeholder="PLTS_MONITOR_01"
                 value={deviceId}
                 onChange={(e) => setDeviceId(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="device-label" className="flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" /> Label Perangkat
+              </Label>
+              <Input
+                id="device-label"
+                data-testid="setup-input-label"
+                placeholder="Basecamp Tebo, Site A, dst."
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
               />
             </div>
 
@@ -352,10 +391,25 @@ export default function SetupPage() {
             data-testid="setup-save-button"
             size="lg"
           >
-            <Save className="w-4 h-4 mr-2" /> Simpan Konfigurasi &amp; Buka Dashboard
+            <Save className="w-4 h-4 mr-2" />
+            {isAddMode ? 'Tambah Perangkat' : 'Simpan Konfigurasi & Buka Dashboard'}
           </Button>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SetupPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <SetupPageInner />
+    </Suspense>
   );
 }

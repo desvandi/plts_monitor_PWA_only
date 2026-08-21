@@ -33,6 +33,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
+import { GasHealthIndicator } from '@/components/layout/gas-health-indicator';
+import { DeviceSwitcher } from '@/components/layout/device-switcher';
 import { formatTime, formatUptime, formatRssi } from '@/lib/format';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
@@ -183,6 +185,13 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex-1" />
 
           <div className="flex items-center gap-1">
+            <div className="hidden md:flex items-center gap-2 mr-1">
+              <DeviceSwitcher />
+              <GasHealthIndicator />
+            </div>
+            <div className="md:hidden">
+              <GasHealthIndicator />
+            </div>
             {isMqttMode ? (
               <Badge
                 variant="outline"

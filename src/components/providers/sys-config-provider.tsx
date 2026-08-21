@@ -1,12 +1,31 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
-import { readSysConfig, writeSysConfig, clearSysConfig, PltsSysConfig } from '@/lib/sysConfig';
+import {
+  readSysConfig,
+  writeSysConfig,
+  clearSysConfig,
+  addDeviceToConfig,
+  removeDeviceFromConfig,
+  switchActiveDevice,
+  PltsSysConfig,
+  DeviceProfile,
+  DashboardSettings,
+} from '@/lib/sysConfig';
 
 interface SysConfigContextValue {
   config: PltsSysConfig | null;
   ready: boolean;
-  save: (next: Omit<PltsSysConfig, 'version' | 'updated_at'>) => PltsSysConfig;
+  save: (next: {
+    gas_webapp_url: string;
+    auth_token: string;
+    device_id: string;
+    label?: string;
+    dashboard_settings: DashboardSettings;
+  }) => PltsSysConfig;
+  addDevice: (profile: DeviceProfile) => PltsSysConfig | null;
+  removeDevice: (deviceId: string) => PltsSysConfig | null;
+  switchDevice: (deviceId: string) => PltsSysConfig | null;
   reset: () => void;
   refresh: () => void;
 }
@@ -33,11 +52,41 @@ export function SysConfigProvider({ children }: { children: ReactNode }) {
     };
   }, [refresh]);
 
-  const save = useCallback((next: Omit<PltsSysConfig, 'version' | 'updated_at'>) => {
-    const persisted = writeSysConfig(next);
+  const save = useCallback(
+    (next: {
+      gas_webapp_url: string;
+      auth_token: string;
+      device_id: string;
+      label?: string;
+      dashboard_settings: DashboardSettings;
+    }) => {
+      const persisted = writeSysConfig(next);
+      setConfig(persisted);
+      return persisted;
+    },
+    []
+  );
+
+  const addDevice = useCallback((profile: DeviceProfile) => {
+    if (!config) return null;
+    const persisted = addDeviceToConfig(config, profile);
     setConfig(persisted);
     return persisted;
-  }, []);
+  }, [config]);
+
+  const removeDevice = useCallback((deviceId: string) => {
+    if (!config) return null;
+    const persisted = removeDeviceFromConfig(config, deviceId);
+    setConfig(persisted);
+    return persisted;
+  }, [config]);
+
+  const switchDevice = useCallback((deviceId: string) => {
+    if (!config) return null;
+    const persisted = switchActiveDevice(config, deviceId);
+    setConfig(persisted);
+    return persisted;
+  }, [config]);
 
   const reset = useCallback(() => {
     clearSysConfig();
@@ -45,7 +94,9 @@ export function SysConfigProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <SysConfigContext.Provider value={{ config, ready, save, reset, refresh }}>
+    <SysConfigContext.Provider
+      value={{ config, ready, save, addDevice, removeDevice, switchDevice, reset, refresh }}
+    >
       {children}
     </SysConfigContext.Provider>
   );
