@@ -223,13 +223,13 @@ function updateDashboard(d) {
 
   // SOC — always ESTIMATED (brief §18)
   const soc = getNested(d, 'battery.soc');
-  document.getElementById('soc').innerHTML = formatValue(soc?.value, '%');
+  setFormatted(document.getElementById('soc'), soc?.value, '%');
   const socQ = document.getElementById('socQuality');
   socQ.textContent = `ESTIMATED · ${(soc?.source || 'COULOMB_COUNTING').toUpperCase()}`;
   socQ.className = 'card-quality estimated';
 
   // Remaining Ah
-  document.getElementById('remainingAh').innerHTML = formatValue(getNested(d, 'battery.remainingAh'), 'Ah');
+  setFormatted(document.getElementById('remainingAh'), getNested(d, 'battery.remainingAh'), 'Ah');
 
   // Runtime
   const runtime = computeRuntime(d);
@@ -240,7 +240,7 @@ function updateDashboard(d) {
 
   // AC Power — ESTIMATED (brief §28)
   const acP = getNested(d, 'ac.estimatedPower');
-  document.getElementById('acPower').innerHTML = formatValue(acP?.value, 'W');
+  setFormatted(document.getElementById('acPower'), acP?.value, 'W');
   const acPQ = document.getElementById('acPowerQuality') || {};
   // always ESTIMATED for AC power
 
@@ -259,14 +259,14 @@ function setMeasurementCard(elemId, meas, unit) {
   const el = document.getElementById(elemId);
   if (!el) return;
   if (!meas || meas.value === null || meas.value === undefined || isNaN(meas.value)) {
-    el.innerHTML = 'N/A';
+    el.textContent = 'N/A';
     const q = document.getElementById(elemId + 'Quality');
     if (q) {
       q.textContent = (meas?.quality || 'NOT_AVAILABLE') + (meas?.source ? ' · ' + meas.source : '');
       q.className = 'card-quality invalid';
     }
   } else {
-    el.innerHTML = `${meas.value.toFixed(2)} <small>${unit}</small>`;
+    setFormatted(el, meas.value, unit);
     const q = document.getElementById(elemId + 'Quality');
     if (q) {
       const quality = meas.quality || 'VALID';
@@ -292,6 +292,24 @@ function formatValue(v, unit) {
   if (v === null || v === undefined || isNaN(v)) return 'N/A';
   return `${Number(v).toFixed(2)} <small>${unit || ''}</small>`;
 }
+// XSS-safe equivalent of `setFormatted(el, v, unit)`.
+// Uses textContent + a <small> child element so no string is parsed as HTML.
+function setFormatted(el, v, unit) {
+  if (!el) return;
+  el.replaceChildren();
+  if (v === null || v === undefined || isNaN(v)) {
+    el.textContent = 'N/A';
+    return;
+  }
+  const num = document.createTextNode(Number(v).toFixed(2) + ' ');
+  el.appendChild(num);
+  if (unit) {
+    const small = document.createElement('small');
+    small.textContent = unit;
+    el.appendChild(small);
+  }
+}
+
 
 // =============================================================================
 // BATTERY VIEW (brief §54)
@@ -299,19 +317,19 @@ function formatValue(v, unit) {
 
 function updateBatteryView(d) {
   const b = d.battery || {};
-  document.getElementById('bVoltage').innerHTML = formatValue(b.voltage?.value, 'V');
-  document.getElementById('bCurrent').innerHTML = formatValue(b.current?.value, 'A');
-  document.getElementById('bPower').innerHTML = formatValue(b.power?.value, 'W');
+  setFormatted(document.getElementById('bVoltage'), b.voltage?.value, 'V');
+  setFormatted(document.getElementById('bCurrent'), b.current?.value, 'A');
+  setFormatted(document.getElementById('bPower'), b.power?.value, 'W');
   document.getElementById('bDirection').textContent = b.direction || '--';
-  document.getElementById('bSoc').innerHTML = formatValue(b.soc?.value, '%');
-  document.getElementById('bRemainingAh').innerHTML = formatValue(b.remainingAh, 'Ah');
-  document.getElementById('bChargeAh').innerHTML = formatValue(b.chargeAh, 'Ah');
-  document.getElementById('bDischargeAh').innerHTML = formatValue(b.dischargeAh, 'Ah');
-  document.getElementById('bNetAh').innerHTML = formatValue(b.chargeAh - b.dischargeAh, 'Ah');
+  setFormatted(document.getElementById('bSoc'), b.soc?.value, '%');
+  setFormatted(document.getElementById('bRemainingAh'), b.remainingAh, 'Ah');
+  setFormatted(document.getElementById('bChargeAh'), b.chargeAh, 'Ah');
+  setFormatted(document.getElementById('bDischargeAh'), b.dischargeAh, 'Ah');
+  setFormatted(document.getElementById('bNetAh'), b.chargeAh - b.dischargeAh, 'Ah');
   document.getElementById('bEfc').textContent = b.efc?.toFixed(3) || '--';
-  document.getElementById('bUsableCap').innerHTML = formatValue(b.estimatedUsableCapacityAh, 'Ah');
-  document.getElementById('bPeakCharge').innerHTML = formatValue(b.peakChargeCurrent, 'A');
-  document.getElementById('bPeakDischarge').innerHTML = formatValue(b.peakDischargeCurrent, 'A');
+  setFormatted(document.getElementById('bUsableCap'), b.estimatedUsableCapacityAh, 'Ah');
+  setFormatted(document.getElementById('bPeakCharge'), b.peakChargeCurrent, 'A');
+  setFormatted(document.getElementById('bPeakDischarge'), b.peakDischargeCurrent, 'A');
 }
 
 // =============================================================================
@@ -320,11 +338,11 @@ function updateBatteryView(d) {
 
 function updateAcView(d) {
   const ac = d.ac || {};
-  document.getElementById('acRms').innerHTML = formatValue(ac.rmsCurrent?.value, 'A');
-  document.getElementById('acPeak').innerHTML = formatValue(ac.peakCurrent?.value, 'A');
-  document.getElementById('acAvg').innerHTML = formatValue(ac.averageCurrent?.value, 'A');
+  setFormatted(document.getElementById('acRms'), ac.rmsCurrent?.value, 'A');
+  setFormatted(document.getElementById('acPeak'), ac.peakCurrent?.value, 'A');
+  setFormatted(document.getElementById('acAvg'), ac.averageCurrent?.value, 'A');
   document.getElementById('acSigQuality').textContent = ac.signalQuality || '--';
-  document.getElementById('acEstPower').innerHTML = formatValue(ac.estimatedPower?.value, 'W');
+  setFormatted(document.getElementById('acEstPower'), ac.estimatedPower?.value, 'W');
 }
 
 // =============================================================================
@@ -333,9 +351,9 @@ function updateAcView(d) {
 
 function updateEnvironmentView(d) {
   const env = d.environment || {};
-  document.getElementById('envTemp').innerHTML = formatValue(env.temperature?.value, '°C');
-  document.getElementById('envHum').innerHTML = formatValue(env.humidity?.value, '%');
-  document.getElementById('envDew').innerHTML = formatValue(env.dewPoint?.value, '°C');
+  setFormatted(document.getElementById('envTemp'), env.temperature?.value, '°C');
+  setFormatted(document.getElementById('envHum'), env.humidity?.value, '%');
+  setFormatted(document.getElementById('envDew'), env.dewPoint?.value, '°C');
   document.getElementById('envCond').textContent = env.condensationRisk ? '⚠️ RISK' : 'OK';
 }
 
@@ -345,11 +363,11 @@ function updateEnvironmentView(d) {
 
 function updateEnergyView(d) {
   const b = d.battery || {};
-  document.getElementById('enChargeWh').innerHTML = formatValue(b.chargeWh, 'Wh');
-  document.getElementById('enDischargeWh').innerHTML = formatValue(b.dischargeWh, 'Wh');
-  document.getElementById('enNetWh').innerHTML = formatValue(b.chargeWh - b.dischargeWh, 'Wh');
-  document.getElementById('enChargeAh').innerHTML = formatValue(b.chargeAh, 'Ah');
-  document.getElementById('enDischargeAh').innerHTML = formatValue(b.dischargeAh, 'Ah');
+  setFormatted(document.getElementById('enChargeWh'), b.chargeWh, 'Wh');
+  setFormatted(document.getElementById('enDischargeWh'), b.dischargeWh, 'Wh');
+  setFormatted(document.getElementById('enNetWh'), b.chargeWh - b.dischargeWh, 'Wh');
+  setFormatted(document.getElementById('enChargeAh'), b.chargeAh, 'Ah');
+  setFormatted(document.getElementById('enDischargeAh'), b.dischargeAh, 'Ah');
   document.getElementById('enEfc').textContent = b.efc?.toFixed(3) || '--';
 }
 
@@ -382,12 +400,22 @@ function updateDiagnostics(d) {
     { name: 'SHT31 (Temp/Humidity)', status: sh.sht31 }
   ];
   const grid = document.getElementById('sensorHealth');
-  grid.innerHTML = sensors.map(s => `
-    <div class="sensor-item">
-      <span class="sensor-name">${s.name}</span>
-      <span class="sensor-status ${s.status || 'OFFLINE'}">${s.status || 'OFFLINE'}</span>
-    </div>
-  `).join('');
+  if (!grid) return;
+  grid.replaceChildren();
+  sensors.forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'sensor-item';
+    const nameEl = document.createElement('span');
+    nameEl.className = 'sensor-name';
+    nameEl.textContent = s.name;
+    const statusEl = document.createElement('span');
+    const st = s.status || 'OFFLINE';
+    statusEl.className = 'sensor-status ' + st;
+    statusEl.textContent = st;
+    row.appendChild(nameEl);
+    row.appendChild(statusEl);
+    grid.appendChild(row);
+  });
 }
 
 // =============================================================================
@@ -402,18 +430,38 @@ function updateActiveAlarmsList(d) {
   const alarms = d.activeAlarms || [];
   const container = document.getElementById('activeAlarms');
   if (alarms.length === 0) {
-    container.innerHTML = '<div class="alarm-item INFO"><span>No active alarms</span></div>';
+    container.replaceChildren();
+    const empty = document.createElement('div');
+    empty.className = 'alarm-item INFO';
+    const emptySpan = document.createElement('span');
+    emptySpan.textContent = 'No active alarms';
+    empty.appendChild(emptySpan);
+    container.appendChild(empty);
   } else {
-    container.innerHTML = alarms.map(a => `
-      <div class="alarm-item ${a.severity}">
-        <span class="alarm-severity ${a.severity}">${a.severity}</span>
-        <span>${a.code}</span>
-        <span style="color: var(--color-text-dim); font-size: 12px;">${a.message || ''}</span>
-        <div class="alarm-actions">
-          <button onclick="acknowledgeAlarm('${a.code}')">ACK</button>
-        </div>
-      </div>
-    `).join('');
+    container.replaceChildren();
+    alarms.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'alarm-item ' + a.severity;
+      const sev = document.createElement('span');
+      sev.className = 'alarm-severity ' + a.severity;
+      sev.textContent = a.severity;
+      const code = document.createElement('span');
+      code.textContent = a.code;
+      const msg = document.createElement('span');
+      msg.style.cssText = 'color: var(--color-text-dim); font-size: 12px;';
+      msg.textContent = a.message || '';
+      const actions = document.createElement('div');
+      actions.className = 'alarm-actions';
+      const btn = document.createElement('button');
+      btn.textContent = 'ACK';
+      btn.addEventListener('click', () => acknowledgeAlarm(a.code));
+      actions.appendChild(btn);
+      row.appendChild(sev);
+      row.appendChild(code);
+      row.appendChild(msg);
+      row.appendChild(actions);
+      container.appendChild(row);
+    });
   }
 }
 
@@ -589,7 +637,14 @@ async function captureCalibrationPoint(point) {
     if (data.success) {
       const refInput = document.getElementById('cal' + (point === 'low' ? 'Low' : point === 'nominal' ? 'Nom' : 'Full') + 'Raw');
       if (refInput) refInput.value = data.raw.toFixed(2);
-      document.getElementById('calibStatus').innerHTML = `<span style="color: var(--status-valid);">Captured ${point}: ${data.raw.toFixed(2)}V</span>`;
+      const csEl = document.getElementById('calibStatus');
+      if (csEl) {
+        csEl.replaceChildren();
+        const span = document.createElement('span');
+        span.style.cssText = 'color: var(--status-valid);';
+        span.textContent = 'Captured ' + point + ': ' + data.raw.toFixed(2) + 'V';
+        csEl.appendChild(span);
+      }
     }
   } catch (err) {
     alert('Capture failed: ' + err.message);
@@ -610,9 +665,19 @@ async function saveCalibration() {
       body: JSON.stringify({ voltageLow: { reference: lowRef }, voltageNominal: { reference: nomRef }, voltageFull: { reference: fullRef } })
     });
     const data = await resp.json();
-    document.getElementById('calibStatus').innerHTML = data.success
-      ? `<span style="color: var(--status-valid);">✓ Calibration saved (v${data.version || 1})</span>`
-      : `<span style="color: var(--status-invalid);">✗ ${data.error}</span>`;
+    const _csEl = document.getElementById('calibStatus');
+    if (_csEl) {
+      _csEl.replaceChildren();
+      const _span = document.createElement('span');
+      if (data.success) {
+        _span.style.cssText = 'color: var(--status-valid);';
+        _span.textContent = '✓ Calibration saved (v' + (data.version || 1) + ')';
+      } else {
+        _span.style.cssText = 'color: var(--status-invalid);';
+        _span.textContent = '✗ ' + (data.error || 'unknown error');
+      }
+      _csEl.appendChild(_span);
+    }
   } catch (err) {
     alert('Save failed: ' + err.message);
   }
@@ -623,9 +688,19 @@ async function performAcs712ZeroCal() {
   try {
     const resp = await fetch(`${CONFIG.API_BASE_URL}/api/calibration/acs712/zero`, { method: 'POST' });
     const data = await resp.json();
-    document.getElementById('acsCalStatus').innerHTML = data.success
-      ? `<span style="color: var(--status-valid);">✓ Zero offset captured: ${data.offset}</span>`
-      : `<span style="color: var(--status-invalid);">✗ ${data.error}</span>`;
+    const _acsCalEl = document.getElementById('acsCalStatus');
+    if (_acsCalEl) {
+      _acsCalEl.replaceChildren();
+      const _span = document.createElement('span');
+      if (data.success) {
+        _span.style.cssText = 'color: var(--status-valid);';
+        _span.textContent = '✓ Zero offset captured: ' + data.offset;
+      } else {
+        _span.style.cssText = 'color: var(--status-invalid);';
+        _span.textContent = '✗ ' + (data.error || 'unknown error');
+      }
+      _acsCalEl.appendChild(_span);
+    }
   } catch (err) {
     alert('Zero cal failed: ' + err.message);
   }
@@ -711,19 +786,31 @@ async function generateReport() {
     const content = document.getElementById('reportContent');
     if (data.success && data.data && data.data.length > 0) {
       const row = data.data[data.data.length - 1];
-      content.innerHTML = `
-        <table style="width:100%; border-collapse: collapse;">
-          <tr><td>Date</td><td>${row.date}</td></tr>
-          <tr><td>Charge Energy</td><td>${row.chargeWh?.toFixed(1) || 0} Wh</td></tr>
-          <tr><td>Discharge Energy</td><td>${row.dischargeWh?.toFixed(1) || 0} Wh</td></tr>
-          <tr><td>Net Energy</td><td>${(row.netWh || 0).toFixed(1)} Wh</td></tr>
-          <tr><td>Charge Ah</td><td>${row.chargeAh?.toFixed(2) || 0} Ah</td></tr>
-          <tr><td>Discharge Ah</td><td>${row.dischargeAh?.toFixed(2) || 0} Ah</td></tr>
-          <tr><td>SOC Range</td><td>${row.socMin || 0}% - ${row.socMax || 0}%</td></tr>
-          <tr><td>Alarm Count</td><td>${row.alarmCount || 0}</td></tr>
-          <tr><td>Telemetry Completeness</td><td>${(row.telemetryCompleteness || 0).toFixed(2)}%</td></tr>
-        </table>
-      `;
+          content.replaceChildren();
+    const tbl = document.createElement('table');
+    tbl.style.cssText = 'width:100%; border-collapse: collapse;';
+    const rows = [
+      ['Date', String(row.date ?? '')],
+      ['Charge Energy', (row.chargeWh != null ? row.chargeWh.toFixed(1) : '0') + ' Wh'],
+      ['Discharge Energy', (row.dischargeWh != null ? row.dischargeWh.toFixed(1) : '0') + ' Wh'],
+      ['Net Energy', (row.netWh != null ? row.netWh.toFixed(1) : '0') + ' Wh'],
+      ['Charge Ah', (row.chargeAh != null ? row.chargeAh.toFixed(2) : '0') + ' Ah'],
+      ['Discharge Ah', (row.dischargeAh != null ? row.dischargeAh.toFixed(2) : '0') + ' Ah'],
+      ['SOC Range', (row.socMin ?? 0) + '% - ' + (row.socMax ?? 0) + '%'],
+      ['Alarm Count', String(row.alarmCount ?? 0)],
+      ['Telemetry Completeness', ((row.telemetryCompleteness ?? 0)).toFixed(2) + '%'],
+    ];
+    rows.forEach(([label, val]) => {
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td');
+      td1.textContent = label;
+      const td2 = document.createElement('td');
+      td2.textContent = val;
+      tr.appendChild(td1);
+      tr.appendChild(td2);
+      tbl.appendChild(tr);
+    });
+    content.appendChild(tbl);
     } else {
       content.textContent = 'No data available for report';
     }
