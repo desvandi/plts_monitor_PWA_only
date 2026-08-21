@@ -1,17 +1,6 @@
 import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
 
-// =============================================================================
-// Next.js config — PLTS Monitor PWA
-// -----------------------------------------------------------------------------
-// CRITICAL FIXES (vs reference Remote-Relay):
-//   - reactStrictMode: true  (reference disabled it; we restore it and make
-//                            providers idempotent instead).
-//   - typescript.ignoreBuildErrors: false  (fail build on TS errors).
-//   - @serwist/next wraps the config to register a real service worker for
-//     offline-capable PWA (reference had NO service worker).
-// =============================================================================
-
 const withSerwist = withSerwistInit({
   swSrc: "src/sw.ts",
   swDest: "public/sw.js",
@@ -27,18 +16,7 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: false,
   },
   serverExternalPackages: ["mqtt"],
-  webpack: (config) => {
-    config.resolve.fallback = {
-      ...config.resolve.fallback,
-      "fs": false,
-      "net": false,
-      "tls": false,
-      "worker-timers": false,
-      "worker-timers-broker": false,
-      "broker-factory": false,
-    };
-    return config;
-  },
+  turbopack: {},
 };
 
 export default withSerwist(nextConfig);
