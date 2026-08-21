@@ -4,6 +4,22 @@
 
 Frontend PWA for the Production-Grade 48V LiFePO4 PLTS Monitoring System.
 
+## Zero-Touch Deployment (2026)
+
+The PWA is now **stateless & client-agnostic** — deploy it once at
+`https://plts.alansa.com` (or your own domain) and every user paste-configures
+their own Google Apps Script URL + auth token via the built-in `/setup` wizard.
+No Vercel environment variables are required.
+
+| Route | Purpose |
+| :--- | :--- |
+| `/setup` | First-Run Experience (PING/PONG handshake, LocalStorage persistence, JSON import/restore) |
+| `/install` | Browser-based ESP32 flashing via [ESP Web Tools](https://esphome.github.io/esp-web-tools/) — reads `/firmware/manifest.json` |
+| `/` | Dashboard, guarded by `ConfigGuard` — redirects to `/setup` if `PLTS_SYS_CONFIG` is missing |
+
+Runtime configuration schema (localStorage key `PLTS_SYS_CONFIG`) is documented
+in `src/lib/sysConfig.ts` and matches §2.3 of the Zero-Touch technical brief.
+
 ## Overview
 
 A trustworthy industrial PLTS monitoring dashboard whose displayed information is traceable, validated, timestamped, quality-qualified, and honest about uncertainty.

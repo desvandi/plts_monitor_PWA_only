@@ -21,3 +21,9 @@ out/
 tsconfig.tsbuildinfo
 next-env.d.ts
 public/swe-worker-*.js
+
+# Runtime/mocks
+.data/
+dev.log
+server.log
+3100

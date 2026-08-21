@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { SystemConfigPanel } from '@/components/settings/system-config-panel';
 
 export function SettingsView() {
   const { data } = useConfig();
@@ -24,6 +25,7 @@ export function SettingsView() {
         </div>
         <Button>Save Configuration</Button>
       </Card>
+      <SystemConfigPanel />
     </div>
   );
 }
