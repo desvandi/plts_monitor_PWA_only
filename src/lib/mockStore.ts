@@ -371,7 +371,7 @@ function makeMeasurement<T extends number>(
   value: T,
   unit: string,
   quality: MeasurementQuality,
-  source: Measurement["source"],
+  source: Measurement<number>["source"],
   seq: number,
 ): Measurement<T> {
   return {

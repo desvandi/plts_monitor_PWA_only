@@ -130,7 +130,7 @@ export function useVersion() {
 }
 
 // ---------- Logs (hybrid REST/MQTT) ----------
-export function useLogs(filter?: { type?: string; limit?: number }) {
+export function useLogs(filter?: { type?: any; limit?: number }) {
   const { session, isMqttMode } = useAuth();
   const mqttLogs = useMqttLogs(filter?.limit ?? 200);
 

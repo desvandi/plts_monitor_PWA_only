@@ -34,8 +34,8 @@ const RANGES: { key: '1h' | '6h' | '12h' | '24h' | '7d' | '30d'; labelKey: Trans
   { key: '6h', labelKey: 'battery.time_range_6h', hours: 6 },
   { key: '12h', labelKey: 'battery.time_range_12h', hours: 12 },
   { key: '24h', labelKey: 'battery.time_range_24h', hours: 24 },
-  { key: '7d', labelKey: 'battery.time_range_7d', days: 7 },
-  { key: '30d', labelKey: 'battery.time_range_30d', days: 30 },
+  { key: '7d', labelKey: 'battery.time_range_7d', hours: 168, days: 7 },
+  { key: '30d', labelKey: 'battery.time_range_30d', hours: 720, days: 30 },
 ];
 
 export function BatteryView() {

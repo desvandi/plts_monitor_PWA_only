@@ -26,11 +26,18 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
-  experimental: {
-    optimizePackageImports: ["lucide-react", "recharts"],
+  serverExternalPackages: ["mqtt"],
+  webpack: (config) => {
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "fs": false,
+      "net": false,
+      "tls": false,
+      "worker-timers": false,
+      "worker-timers-broker": false,
+      "broker-factory": false,
+    };
+    return config;
   },
 };
 
