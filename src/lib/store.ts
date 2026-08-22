@@ -23,7 +23,8 @@ export type ViewKey =
   | "reports"
   | "ai"
   | "settings"
-  | "ota";
+  | "ota"
+  | "fleet";
 
 type UiState = {
   currentView: ViewKey;

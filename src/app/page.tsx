@@ -5,6 +5,7 @@ import { useUiStore } from '@/lib/store';
 import { LoginForm } from '@/components/auth/login-form';
 import { AppShell } from '@/components/layout/app-shell';
 import { DashboardView } from '@/components/dashboard/dashboard-view';
+import { FleetView } from '@/components/fleet/fleet-view';
 import { BatteryView } from '@/components/battery/battery-view';
 import { AcOutputView } from '@/components/ac/ac-output-view';
 import { EnvironmentView } from '@/components/environment/environment-view';
@@ -43,6 +44,7 @@ export default function Home() {
   return (
     <AppShell>
       {currentView === 'dashboard' && <DashboardView />}
+      {currentView === 'fleet' && <FleetView />}
       {currentView === 'battery' && <BatteryView />}
       {currentView === 'ac' && <AcOutputView />}
       {currentView === 'environment' && <EnvironmentView />}

@@ -28,6 +28,7 @@ import {
   Wifi,
   WifiOff,
   Sun,
+  Server,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +36,7 @@ import { ThemeToggle } from '@/components/layout/theme-toggle';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { GasHealthIndicator } from '@/components/layout/gas-health-indicator';
 import { DeviceSwitcher } from '@/components/layout/device-switcher';
+import { useLowBatteryNotifier } from '@/hooks/useLowBatteryNotifier';
 import { formatTime, formatUptime, formatRssi } from '@/lib/format';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
@@ -45,6 +47,7 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard', icon: LayoutDashboard },
+  { key: 'fleet', icon: Server },
   { key: 'battery', icon: Battery },
   { key: 'ac', icon: Zap },
   { key: 'environment', icon: Thermometer },
@@ -72,6 +75,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const { data: status } = useStatus();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [clock, setClock] = useState(() => Date.now());
+  useLowBatteryNotifier();
 
   useEffect(() => {
     const id = setInterval(() => setClock(Date.now()), 1000);

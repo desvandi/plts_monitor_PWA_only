@@ -29,6 +29,7 @@ export type TranslationKey =
   | "nav.ai"
   | "nav.settings"
   | "nav.ota"
+  | "nav.fleet"
   // Common
   | "common.save"
   | "common.cancel"
@@ -377,6 +378,7 @@ const id: Dict = {
   "nav.ai": "Insight AI",
   "nav.settings": "Pengaturan",
   "nav.ota": "OTA Firmware",
+  "nav.fleet": "Fleet",
   "common.save": "Simpan",
   "common.cancel": "Batal",
   "common.confirm": "Konfirmasi",
@@ -704,6 +706,7 @@ const en: Dict = {
   "nav.ai": "AI Insights",
   "nav.settings": "Settings",
   "nav.ota": "Firmware OTA",
+  "nav.fleet": "Fleet",
   "common.save": "Save",
   "common.cancel": "Cancel",
   "common.confirm": "Confirm",

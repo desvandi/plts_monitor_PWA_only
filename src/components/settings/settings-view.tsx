@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { SystemConfigPanel } from '@/components/settings/system-config-panel';
 import { DeviceQrPanel } from '@/components/settings/device-qr-panel';
 import { OtaSigningPanel } from '@/components/settings/ota-signing-panel';
+import { BrowserNotificationPanel } from '@/components/settings/browser-notification-panel';
 
 export function SettingsView() {
   const { data } = useConfig();
@@ -28,6 +29,7 @@ export function SettingsView() {
         <Button>Save Configuration</Button>
       </Card>
       <SystemConfigPanel />
+      <BrowserNotificationPanel />
       <DeviceQrPanel />
       <OtaSigningPanel />
     </div>

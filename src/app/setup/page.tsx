@@ -19,6 +19,7 @@ import {
   validateSysConfig,
 } from '@/lib/sysConfig';
 import { useSysConfig } from '@/components/providers/sys-config-provider';
+import { QrScannerButton } from '@/components/setup/qr-scanner-button';
 
 type HandshakeStatus = 'idle' | 'testing' | 'success' | 'failed';
 
@@ -164,6 +165,33 @@ function SetupPageInner() {
     []
   );
 
+  /** Decode a QR text — accepts either `#plts=<b64>` URL or raw JSON payload. */
+  const handleQrPayload = useCallback((raw: string) => {
+    try {
+      let jsonText = raw.trim();
+      const hashMatch = jsonText.match(/#plts=([^&]+)/);
+      if (hashMatch) {
+        jsonText = decodeURIComponent(escape(window.atob(hashMatch[1])));
+      } else if (/^[A-Za-z0-9+/=]+$/.test(jsonText) && jsonText.length > 40) {
+        try {
+          jsonText = decodeURIComponent(escape(window.atob(jsonText)));
+        } catch {
+          /* keep as-is */
+        }
+      }
+      const parsed = JSON.parse(jsonText) as Record<string, unknown>;
+      if (typeof parsed.gas_url === 'string') setGasUrl(parsed.gas_url);
+      if (typeof parsed.auth_token === 'string') setAuthToken(parsed.auth_token);
+      if (typeof parsed.device_key === 'string') setDeviceId(parsed.device_key);
+      if (typeof parsed.label === 'string') setLabel(parsed.label);
+      if (typeof parsed.telemetry_interval_sec === 'number') setRefreshSec(parsed.telemetry_interval_sec);
+      setHandshakeStatus('idle');
+      setHandshake(null);
+    } catch {
+      toast.error('QR tidak valid — payload harus JSON PLTS onboarding.');
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground py-8 px-4">
       <div className="max-w-3xl mx-auto space-y-6">
@@ -245,6 +273,22 @@ function SetupPageInner() {
                 placeholder="Basecamp Tebo, Site A, dst."
                 value={label}
                 onChange={(e) => setLabel(e.target.value)}
+              />
+            </div>
+
+            <Separator />
+
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium">Scan QR Onboarding</p>
+                <p className="text-xs text-muted-foreground">
+                  Arahkan kamera ke QR yang di-print dari PWA lain — form akan terisi otomatis.
+                </p>
+              </div>
+              <QrScannerButton
+                onDetected={handleQrPayload}
+                label="Buka Kamera"
+                data-testid="setup-qr-scan"
               />
             </div>
 
