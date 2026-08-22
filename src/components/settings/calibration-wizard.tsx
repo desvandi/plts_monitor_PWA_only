@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Battery, Bolt, Gauge, Loader2, RefreshCw, ShieldCheck, Wand2 } from 'lucide-react';
+import { Battery, Bolt, Gauge, Loader2, RefreshCw, RotateCcw, ShieldCheck, Wand2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { useSysConfig } from '@/components/providers/sys-config-provider';
+
+const DEFAULT_FACTORS = { v_calib: 11, i_calib_dc: 1, i_calib_ac: 1 } as const;
 
 interface LatestReading {
   v_bat: number | null;
@@ -114,6 +127,7 @@ export function CalibrationWizard() {
   const [reading, setReading] = useState<LatestReading | null>(null);
   const [loading, setLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   const [channels, setChannels] = useState<Record<ChannelKey, ChannelState>>({
     v:  { raw: null, reference: '', currentFactor: 11, newFactor: null },
@@ -190,6 +204,31 @@ export function CalibrationWizard() {
       toast.error(`Publish gagal: ${result.message}`);
     }
   }, [channels, config]);
+
+  const doResetDefaults = useCallback(async () => {
+    if (!config) return;
+    setResetting(true);
+    const result = await publishCalibration(
+      config.gas_webapp_url,
+      config.auth_token,
+      config.device_id,
+      DEFAULT_FACTORS,
+    );
+    setResetting(false);
+    if (result.ok) {
+      toast.success(
+        `Reset default terkirim (cmd ${result.command_id?.slice(0, 8) ?? '—'}). ` +
+        'ESP32 akan menerapkan V=11.0, I-DC=1.0, I-AC=1.0 pada polling berikutnya.'
+      );
+      setChannels((prev) => ({
+        v:  { ...prev.v,  reference: '', currentFactor: DEFAULT_FACTORS.v_calib,    newFactor: null },
+        dc: { ...prev.dc, reference: '', currentFactor: DEFAULT_FACTORS.i_calib_dc, newFactor: null },
+        ac: { ...prev.ac, reference: '', currentFactor: DEFAULT_FACTORS.i_calib_ac, newFactor: null },
+      }));
+    } else {
+      toast.error(`Reset default gagal: ${result.message}`);
+    }
+  }, [config]);
 
   if (!config) return null;
 
@@ -311,12 +350,55 @@ export function CalibrationWizard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <Button
-          onClick={() => setOpen(true)}
-          data-testid="calibration-wizard-open"
-        >
-          <Wand2 className="w-4 h-4 mr-2" /> Mulai Wizard
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => setOpen(true)}
+            data-testid="calibration-wizard-open"
+          >
+            <Wand2 className="w-4 h-4 mr-2" /> Mulai Wizard
+          </Button>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={resetting}
+                data-testid="calibration-reset-defaults"
+              >
+                {resetting ? (
+                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Mengirim...</>
+                ) : (
+                  <><RotateCcw className="w-4 h-4 mr-2" /> Reset ke Default</>
+                )}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent data-testid="calibration-reset-confirm">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2">
+                  <RotateCcw className="w-4 h-4" /> Reset Faktor Kalibrasi
+                </AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tindakan ini akan mengirim faktor default ke ESP32:
+                  <span className="mt-2 block font-mono text-xs bg-muted rounded-md px-3 py-2">
+                    v_calib = 11.0<br />
+                    i_calib_dc = 1.0<br />
+                    i_calib_ac = 1.0
+                  </span>
+                  Perangkat akan menerapkan pada polling berikutnya (maks. 5 menit).
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel data-testid="calibration-reset-cancel">Batal</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => void doResetDefaults()}
+                  data-testid="calibration-reset-confirm-yes"
+                >
+                  Ya, Reset
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </CardContent>
 
       <Dialog open={open} onOpenChange={setOpen}>
