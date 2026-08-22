@@ -8,6 +8,7 @@ import { SystemConfigPanel } from '@/components/settings/system-config-panel';
 import { DeviceQrPanel } from '@/components/settings/device-qr-panel';
 import { OtaSigningPanel } from '@/components/settings/ota-signing-panel';
 import { BrowserNotificationPanel } from '@/components/settings/browser-notification-panel';
+import { CalibrationWizard } from '@/components/settings/calibration-wizard';
 
 export function SettingsView() {
   const { data } = useConfig();
@@ -29,6 +30,7 @@ export function SettingsView() {
         <Button>Save Configuration</Button>
       </Card>
       <SystemConfigPanel />
+      <CalibrationWizard />
       <BrowserNotificationPanel />
       <DeviceQrPanel />
       <OtaSigningPanel />
