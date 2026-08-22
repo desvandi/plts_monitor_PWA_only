@@ -4,6 +4,7 @@ import { useCompatibility } from '@/lib/compatibility';
 import { AlertTriangle, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/components/providers/language-provider';
 
@@ -18,6 +19,7 @@ export function CompatibilityBanner() {
   const { data } = useCompatibility();
   const { t } = useLanguage();
   const [dismissed, setDismissed] = useState(false);
+  const pathname = usePathname();
 
   // Re-show banner when status changes from compatible → incompatible.
   useEffect(() => {
@@ -25,6 +27,13 @@ export function CompatibilityBanner() {
       setDismissed(false);
     }
   }, [data?.status]);
+
+  // Suppress banner on onboarding routes — Setup/Install have no AppShell
+  // header, so the sticky top-14 would visually collide with the page title.
+  const OPEN_ROUTES = ['/setup', '/install'];
+  if (OPEN_ROUTES.some((r) => pathname === r || pathname.startsWith(`${r}/`))) {
+    return null;
+  }
 
   if (!data || data.status === 'compatible' || dismissed) return null;
 
@@ -34,7 +43,7 @@ export function CompatibilityBanner() {
   return (
     <div
       className={cn(
-        'sticky top-14 z-30 border-b px-4 py-2.5 flex items-center gap-3 text-sm',
+        'border-b px-4 py-2.5 flex items-center gap-3 text-sm',
         isError
           ? 'bg-status-error/10 border-status-error/30 text-status-error'
           : 'bg-status-warn/10 border-status-warn/30 text-status-warn',

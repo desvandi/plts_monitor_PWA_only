@@ -137,7 +137,20 @@ export function readSysConfig(): PltsSysConfig | null {
   try {
     const raw = window.localStorage.getItem(SYS_CONFIG_KEY);
     if (!raw) return null;
-    return validateSysConfig(JSON.parse(raw));
+    const parsed = JSON.parse(raw) as unknown;
+    const validated = validateSysConfig(parsed);
+    if (!validated) return null;
+    // Persist migrated payload back to disk so v1 legacy blobs get upgraded
+    // to v2 in place — no repeat migration on every read.
+    const originalVersion = (parsed as { version?: string })?.version;
+    if (originalVersion !== SYS_CONFIG_VERSION) {
+      try {
+        window.localStorage.setItem(SYS_CONFIG_KEY, JSON.stringify(validated));
+      } catch {
+        /* ignore quota errors — in-memory config is still valid */
+      }
+    }
+    return validated;
   } catch {
     return null;
   }

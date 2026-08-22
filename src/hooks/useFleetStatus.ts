@@ -6,13 +6,18 @@ import { useSysConfig } from '@/components/providers/sys-config-provider';
 
 export interface FleetTelemetry {
   v_bat: number | null;
-  i_bat: number | null;
+  i_bat_dc: number | null;
+  p_bat_dc: number | null;
+  i_ac_load: number | null;
+  ina219_ok: string | null;
   soc_percent: number | null;
   rssi: number | null;
   free_heap: number | null;
   fw_version: string | null;
   temp_celsius: number | null;
   timestamp: string | null;
+  // legacy fields kept for backward-compat with older firmware
+  i_bat?: number | null;
 }
 
 export interface FleetDeviceStatus {
@@ -67,7 +72,10 @@ async function fetchLatestFor(device: DeviceProfile): Promise<{
       latency_ms: latency,
       telemetry: {
         v_bat: asNum(d.v_bat),
-        i_bat: asNum(d.i_bat),
+        i_bat_dc: asNum(d.i_bat_dc ?? (d as { i_bat?: unknown }).i_bat),
+        p_bat_dc: asNum(d.p_bat_dc),
+        i_ac_load: asNum(d.i_ac_load),
+        ina219_ok: (d.ina219_ok as string | null) ?? null,
         soc_percent: asNum(d.soc_percent),
         rssi: asNum(d.rssi),
         free_heap: asNum(d.free_heap),

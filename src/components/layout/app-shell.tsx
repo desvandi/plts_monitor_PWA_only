@@ -37,6 +37,7 @@ import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { GasHealthIndicator } from '@/components/layout/gas-health-indicator';
 import { DeviceSwitcher } from '@/components/layout/device-switcher';
 import { useLowBatteryNotifier } from '@/hooks/useLowBatteryNotifier';
+import { CompatibilityBanner } from '@/components/compatibility-banner';
 import { formatTime, formatUptime, formatRssi } from '@/lib/format';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
@@ -118,6 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                     <button
                       key={item.key}
                       onClick={() => onNavClick(item.key)}
+                      data-testid={`nav-${item.key}`}
                       className={cn(
                         'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                         active
@@ -224,6 +226,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
 
+      <CompatibilityBanner />
+
       <div className="flex-1 flex">
         <aside className="hidden md:flex w-56 flex-col border-r border-border bg-sidebar/30">
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-3.5rem-7rem)]">
@@ -234,6 +238,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <button
                   key={item.key}
                   onClick={() => onNavClick(item.key)}
+                  data-testid={`nav-desktop-${item.key}`}
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
                     active

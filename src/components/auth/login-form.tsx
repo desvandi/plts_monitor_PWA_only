@@ -131,6 +131,7 @@ export function LoginForm() {
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="username"
+                        data-testid="login-username-input"
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
@@ -147,6 +148,7 @@ export function LoginForm() {
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                       <Input
                         id="password"
+                        data-testid="login-password-input"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
@@ -164,7 +166,7 @@ export function LoginForm() {
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full" disabled={loading} data-testid="login-submit-button">
                     {loading ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />

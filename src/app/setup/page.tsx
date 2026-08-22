@@ -185,6 +185,8 @@ function SetupPageInner() {
       if (typeof parsed.device_key === 'string') setDeviceId(parsed.device_key);
       if (typeof parsed.label === 'string') setLabel(parsed.label);
       if (typeof parsed.telemetry_interval_sec === 'number') setRefreshSec(parsed.telemetry_interval_sec);
+      // Both new (i_calib_dc/i_calib_ac) and legacy (i_calib) keys silently
+      // ignored here — Fleet-side calibration is stored elsewhere.
       setHandshakeStatus('idle');
       setHandshake(null);
     } catch {

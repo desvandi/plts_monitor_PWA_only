@@ -1,6 +1,6 @@
 'use client';
 
-import { Battery, RefreshCw, Signal, Cpu, ArrowRight, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
+import { RefreshCw, Signal, Cpu, ArrowRight, AlertTriangle, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,13 +34,6 @@ function fmtRelative(iso: string | null): string {
   if (diffMs < 3_600_000) return `${Math.round(diffMs / 60_000)} menit lalu`;
   if (diffMs < 86_400_000) return `${Math.round(diffMs / 3_600_000)} jam lalu`;
   return `${Math.round(diffMs / 86_400_000)} hari lalu`;
-}
-
-function socColor(soc: number | null): string {
-  if (soc == null) return 'text-muted-foreground';
-  if (soc >= 60) return 'text-emerald-500';
-  if (soc >= 30) return 'text-amber-500';
-  return 'text-red-500';
 }
 
 export function FleetView() {
@@ -103,8 +96,9 @@ export function FleetView() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Perangkat</TableHead>
-                  <TableHead className="text-right">SoC</TableHead>
                   <TableHead className="text-right">V-Bat</TableHead>
+                  <TableHead className="text-right">I-DC (INA219)</TableHead>
+                  <TableHead className="text-right">I-AC (ACS712)</TableHead>
                   <TableHead className="text-right">RSSI</TableHead>
                   <TableHead>Firmware</TableHead>
                   <TableHead>Terakhir Online</TableHead>
@@ -145,15 +139,20 @@ export function FleetView() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span className={cn('font-mono font-medium', socColor(row.telemetry?.soc_percent ?? null))}>
-                          <Battery className="w-3 h-3 inline mr-1" />
-                          {row.telemetry?.soc_percent != null
-                            ? `${row.telemetry.soc_percent.toFixed(0)}%`
-                            : '—'}
+                        <span className="font-mono">
+                          {row.telemetry?.v_bat != null ? `${row.telemetry.v_bat.toFixed(2)} V` : '—'}
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {row.telemetry?.v_bat != null ? `${row.telemetry.v_bat.toFixed(2)} V` : '—'}
+                        <span className={cn(row.telemetry?.ina219_ok === 'MISSING' && 'text-amber-500')}>
+                          {row.telemetry?.i_bat_dc != null ? `${row.telemetry.i_bat_dc.toFixed(2)} A` : '—'}
+                        </span>
+                        {row.telemetry?.ina219_ok === 'MISSING' && (
+                          <div className="text-[10px] text-amber-500">sensor absen</div>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {row.telemetry?.i_ac_load != null ? `${row.telemetry.i_ac_load.toFixed(2)} A` : '—'}
                       </TableCell>
                       <TableCell className="text-right font-mono">
                         <span className="inline-flex items-center gap-1">
@@ -192,7 +191,7 @@ export function FleetView() {
                 })}
                 {statuses.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground text-sm py-6">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground text-sm py-6">
                       Belum ada perangkat terdaftar. Tambahkan lewat menu Device Switcher.
                     </TableCell>
                   </TableRow>

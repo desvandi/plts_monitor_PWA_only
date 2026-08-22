@@ -39,7 +39,8 @@ export function DeviceQrPanel() {
   const [wifiPass, setWifiPass] = useState('');
   const [interval, setInterval] = useState(15);
   const [vCalib, setVCalib] = useState(11);
-  const [iCalib, setICalib] = useState(1);
+  const [iCalibDc, setICalibDc] = useState(1);
+  const [iCalibAc, setICalibAc] = useState(1);
 
   const [wifiDataUrl, setWifiDataUrl] = useState<string | null>(null);
   const [onboardDataUrl, setOnboardDataUrl] = useState<string | null>(null);
@@ -54,9 +55,10 @@ export function DeviceQrPanel() {
       device_key: config.device_id,
       telemetry_interval_sec: interval,
       v_calib: vCalib,
-      i_calib: iCalib,
+      i_calib_dc: iCalibDc,
+      i_calib_ac: iCalibAc,
     });
-  }, [config, wifiSsid, wifiPass, interval, vCalib, iCalib]);
+  }, [config, wifiSsid, wifiPass, interval, vCalib, iCalibDc, iCalibAc]);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,13 +168,25 @@ export function DeviceQrPanel() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="qr-icalib">I Calib</Label>
+            <Label htmlFor="qr-icalib-dc">I Calib DC (INA219)</Label>
             <Input
-              id="qr-icalib"
+              id="qr-icalib-dc"
+              data-testid="qr-icalib-dc"
               type="number"
               step={0.01}
-              value={iCalib}
-              onChange={(e) => setICalib(Number(e.target.value) || 1)}
+              value={iCalibDc}
+              onChange={(e) => setICalibDc(Number(e.target.value) || 1)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="qr-icalib-ac">I Calib AC (ACS712)</Label>
+            <Input
+              id="qr-icalib-ac"
+              data-testid="qr-icalib-ac"
+              type="number"
+              step={0.01}
+              value={iCalibAc}
+              onChange={(e) => setICalibAc(Number(e.target.value) || 1)}
             />
           </div>
         </div>

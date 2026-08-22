@@ -10,7 +10,6 @@ import { AuthProvider } from "@/components/providers/auth-provider";
 import { MqttProvider } from "@/components/providers/mqtt-provider";
 import { SysConfigProvider } from "@/components/providers/sys-config-provider";
 import { ConfigGuard } from "@/components/providers/config-guard";
-import { CompatibilityBanner } from "@/components/compatibility-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -98,7 +97,6 @@ export default function RootLayout({
                 <AuthProvider>
                   <SysConfigProvider>
                     <ConfigGuard>
-                      <CompatibilityBanner />
                       {children}
                     </ConfigGuard>
                     <Toaster />

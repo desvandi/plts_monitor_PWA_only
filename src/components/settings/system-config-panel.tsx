@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useSysConfig } from '@/components/providers/sys-config-provider';
-import { exportSysConfigBlob, validateSysConfig, writeSysConfig } from '@/lib/sysConfig';
+import { exportSysConfigBlob, persistSysConfig, validateSysConfig } from '@/lib/sysConfig';
 
 /**
  * SystemConfigPanel — Export, Import & Factory Reset PWA config (§2.5).
@@ -53,14 +53,19 @@ export function SystemConfigPanel() {
         toast.error('File tidak sesuai schema PLTS_SYS_CONFIG.');
         return;
       }
-      writeSysConfig({
+      // Persist the FULL validated multi-device config (v2 schema).
+      // Using writeSysConfig() here would collapse devices[] to a single
+      // entry and drop labels — see testing-agent regression report.
+      persistSysConfig({
         gas_webapp_url: validated.gas_webapp_url,
         auth_token: validated.auth_token,
         device_id: validated.device_id,
         dashboard_settings: validated.dashboard_settings,
+        active_device_id: validated.active_device_id,
+        devices: validated.devices,
       });
       refresh();
-      toast.success('Konfigurasi berhasil diimpor.');
+      toast.success(`Konfigurasi berhasil diimpor (${validated.devices.length} device).`);
     } catch {
       toast.error('Gagal membaca file JSON.');
     }
@@ -96,6 +101,7 @@ export function SystemConfigPanel() {
         </Button>
         <input
           ref={fileRef}
+          data-testid="config-import-file"
           type="file"
           accept="application/json"
           className="hidden"
